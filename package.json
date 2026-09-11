@@ -7,13 +7,15 @@
     "build": "tsc -p tsconfig.json",
     "postinstall": "npm run build",
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "setup:profile": "npm run build && node dist/setup-profile.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "dotenv": "^16.6.1",
     "express": "^4.19.2"
   },
   "devDependencies": {

@@ -77,7 +77,22 @@ npm run dev
    - `messaging_postbacks`
 4. Ở mục **Messenger > Settings > Access Tokens**, đảm bảo Page của bạn đang **Subscribed** vào app (nút "Subscribe" cạnh tên Page nếu chưa subscribe).
 
-## 5. Test flow end-to-end
+## 5. Bật màn hình chào cho user mới (Get Started + Greeting Text)
+
+Mặc định, user mới bấm vào "Nhắn tin" sẽ không thấy gì cho tới khi họ tự gõ gì đó. Để tự động hiện đoạn giới thiệu + nút **Bắt đầu** như Facebook thường làm, cần gọi Messenger Profile API một lần (không cần deploy lại mỗi khi đổi flow, chỉ cần chạy lại script này nếu muốn đổi greeting text):
+
+```bash
+# ở máy local, với PAGE_ACCESS_TOKEN trong .env đã là token còn hạn
+npm run setup:profile
+```
+
+Script (`src/setup-profile.ts`) sẽ gọi `POST /me/messenger_profile` để cấu hình:
+- **Greeting text**: đoạn chào hiện trước khi user bấm Bắt đầu.
+- **Get Started button**: khi bấm, Facebook gửi `postback` với `payload = "GET_STARTED"` về webhook. Webhook không có node tên `GET_STARTED` trong `flow.ts` nên tự fallback về node `START` (xem `getNode()` trong `src/flow.ts`) — tức là user sẽ thấy đúng màn hình "Xin chào! Bạn cần hỗ trợ gì?" kèm 3 nút.
+
+Chỉ cần chạy lệnh này **1 lần** (hoặc mỗi khi muốn đổi câu greeting) — không phải chạy lại mỗi lần deploy.
+
+## 6. Test flow end-to-end
 
 1. Mở Messenger, nhắn tin cho Facebook Page của bạn (chủ Page test được ngay ở chế độ Development; muốn người khác test cần thêm họ vào **Roles > Testers** hoặc submit App Review).
 2. Gõ bất kỳ tin nhắn nào (vd "hi") → bot trả lời:
