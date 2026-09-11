@@ -17,7 +17,8 @@ const GRAPH_API_VERSION = "v20.0";
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
 const GREETING_TEXT =
-  "Chào mừng bạn đến với Chatbot Pricare! Bấm \"Bắt đầu\" để được hỗ trợ.";
+  "Chào mừng Quý phụ huynh đến với Trung tâm Anh ngữ ABC! " +
+  "Bấm \"Bắt đầu\" để xem thời gian học, địa điểm và thông tin giáo viên.";
 
 async function main() {
   if (!PAGE_ACCESS_TOKEN) {

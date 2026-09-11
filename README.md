@@ -1,24 +1,32 @@
 # conversation-flow-facebook
 
-MVP Facebook Messenger conversation flow bot. Node.js + Express + TypeScript, không dùng database, không có frontend, không có authentication. Toàn bộ flow (câu hỏi + nút bấm) được hard-code trong `src/flow.ts`.
+MVP Facebook Messenger conversation flow bot cho một trung tâm Anh ngữ, giúp phụ huynh tra cứu nhanh thời gian học / địa điểm / thông tin giáo viên qua nút bấm. Node.js + Express + TypeScript, không dùng database, không có frontend, không có authentication. Toàn bộ flow (câu hỏi + nút bấm) được hard-code trong `src/flow.ts`.
 
 ## Cách hoạt động
 
-- User nhắn tin bất kỳ vào Page → bot gửi node `START` (text + 3 nút).
-- User bấm nút → Facebook gửi một `postback` với `payload` là id của node tiếp theo về `POST /webhook`.
+- User mở cuộc trò chuyện lần đầu → Facebook hiện màn hình chào + nút **Bắt đầu** (cấu hình qua `src/setup-profile.ts`, xem mục 5 bên dưới).
+- User bấm **Bắt đầu** hoặc bất kỳ nút nào → Facebook gửi một `postback` với `payload` là id của node tiếp theo về `POST /webhook`.
 - Backend tra `payload` trong `src/flow.ts`, gửi message + nút của node đó lại cho user.
 - Không lưu state gì cả: node tiếp theo luôn được suy ra 100% từ `payload` nhận được, kể cả nút "Quay lại" (payload trỏ thẳng về node cha).
+- **Nếu user gõ tin nhắn tự do (không bấm nút)**: bot **không phản hồi gì nữa** — coi như flow tự động đã kết thúc, để bộ phận CSKH vào xử lý thủ công (xem `src/index.ts`, hàm `handleMessagingEvent`).
 
-Flow test có sẵn (đúng yêu cầu):
+Flow hiện tại:
 
 ```
-START ─┬─ Sản phẩm ─┬─ Sản phẩm A ─┬─ Xem chi tiết → PRODUCT_A_DETAIL
-       │            │              └─ Quay lại → PRODUCT
-       │            └─ Sản phẩm B ─┬─ Xem chi tiết → PRODUCT_B_DETAIL
-       │                           └─ Quay lại → PRODUCT
-       ├─ Báo giá → PRICING → Quay lại → START
-       └─ Hỗ trợ → SUPPORT → Quay lại → START
+START (Bắt đầu) ─┬─ Thời gian học ─┬─ Lớp Thiếu nhi (6-11 tuổi) ─ Quay lại → SCHEDULE
+                 │  (SCHEDULE)     └─ Lớp Thiếu niên (12-17 tuổi) ─ Quay lại → SCHEDULE
+                 │                 └─ Quay lại → START
+                 │
+                 ├─ Địa điểm học ─┬─ Cơ sở Quận 1 ─ Quay lại → LOCATION
+                 │  (LOCATION)    └─ Cơ sở Quận 7 ─ Quay lại → LOCATION
+                 │                └─ Quay lại → START
+                 │
+                 └─ Thông tin giáo viên ─┬─ Giáo viên nước ngoài ─ Quay lại → TEACHER
+                    (TEACHER)            └─ Giáo viên Việt Nam ─ Quay lại → TEACHER
+                                          └─ Quay lại → START
 ```
+
+⚠️ Nội dung mẫu (lịch học, địa chỉ cơ sở, thông tin giáo viên) trong `src/flow.ts` cần được thay bằng thông tin thật của trung tâm.
 
 ## Cấu trúc project
 
@@ -94,13 +102,13 @@ Chỉ cần chạy lệnh này **1 lần** (hoặc mỗi khi muốn đổi câu 
 
 ## 6. Test flow end-to-end
 
-1. Mở Messenger, nhắn tin cho Facebook Page của bạn (chủ Page test được ngay ở chế độ Development; muốn người khác test cần thêm họ vào **Roles > Testers** hoặc submit App Review).
-2. Gõ bất kỳ tin nhắn nào (vd "hi") → bot trả lời:
-   > Xin chào! Bạn cần hỗ trợ gì?
-   > `[Sản phẩm]` `[Báo giá]` `[Hỗ trợ]`
-3. Bấm **Sản phẩm** → bot hỏi chọn Sản phẩm A / B.
-4. Bấm **Sản phẩm A** → bot xác nhận, có nút **Xem chi tiết** / **Quay lại**.
-5. Bấm **Xem chi tiết** → bot trả về thông tin chi tiết + nút **Quay lại**.
+1. Mở Messenger, mở cuộc trò chuyện với Facebook Page của bạn như một user mới (chủ Page test được ngay ở chế độ Development; muốn người khác test cần thêm họ vào **Roles > Testers** hoặc submit App Review). Nếu đã nhắn tin trước đó, xoá cuộc trò chuyện cũ để thấy lại màn hình chào.
+2. Thấy màn hình chào + nút **Bắt đầu** → bấm vào → bot trả lời:
+   > Xin chào Quý phụ huynh! Trung tâm Anh ngữ ABC xin chào. Anh/chị muốn tìm hiểu thông tin gì ạ?
+   > `[Thời gian học]` `[Địa điểm học]` `[Thông tin giáo viên]`
+3. Bấm **Thời gian học** → bot hỏi chọn nhóm lớp (Thiếu nhi / Thiếu niên) + nút Quay lại.
+4. Bấm **Lớp Thiếu nhi (6-11 tuổi)** → bot trả về lịch học chi tiết + nút **Quay lại**.
+5. Gõ thử một tin nhắn tự do bất kỳ (vd "cho em hỏi thêm") → bot **không trả lời gì** — đây là hành vi đúng, để CSKH tiếp nhận thủ công.
 
 ## Debug
 

@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express, { Request, Response } from "express";
-import { getNode, START_NODE } from "./flow";
+import { getNode } from "./flow";
 import { sendFlowNode } from "./messenger";
 
 const app = express();
@@ -57,7 +57,9 @@ async function handleMessagingEvent(event: any): Promise<void> {
   const senderId: string | undefined = event?.sender?.id;
   if (!senderId) return;
 
-  // Button click -> postback.payload holds the next node id.
+  // Button click -> postback.payload holds the next node id. This is the
+  // only way the automated flow responds (entry point is the "Get Started"
+  // button, configured via src/setup-profile.ts, which fires GET_STARTED).
   if (event.postback) {
     const payload: string = event.postback.payload;
     const node = getNode(payload);
@@ -65,12 +67,9 @@ async function handleMessagingEvent(event: any): Promise<void> {
     return;
   }
 
-  // Plain text message (ignore delivery/read/echo events) -> restart flow.
-  if (event.message && !event.message.is_echo) {
-    const node = getNode(START_NODE);
-    await sendFlowNode(senderId, node);
-    return;
-  }
+  // A free-typed message means the parent wants to talk to a human, not
+  // click through the menu. Intentionally send nothing here: the automated
+  // flow ends and staff (CSKH) takes over the conversation manually.
 }
 
 app.listen(PORT, () => {
